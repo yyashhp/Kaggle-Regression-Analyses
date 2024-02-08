@@ -1,0 +1,70 @@
+import numpy as np, pandas as pd, statsmodels.formula.api as smf, math, statsmodels.api as sm
+import matplotlib.pyplot as plt
+readings = [np.random.normal(50,5,25) for p in range(6)]
+df = pd.DataFrame(readings).T
+df.columns= ['NYC', 'LA', 'SF', 'CHI', 'DC', 'BOS']
+
+std_devs = [np.std(df[col]) for col in df.columns]
+q1 = df.columns.values[std_devs.index(max(std_devs))]
+#print(q1)
+q2_df = df.loc[(df['SF'] > 47) & (df['SF'] < 53)]
+nyc_q2 = int(q2_df['NYC'].median())
+#print(nyc_q2)
+#print(df.describe().loc['mean'])
+r_2 = []
+param_abs = []
+Y = df['NYC']
+#X = df.drop(columns = ['NYC'])
+for col in df.columns[1:]:
+    X = df[col]
+    X = sm.add_constant(X)
+    model = sm.OLS(Y, X).fit()
+    params = (list(model.params))
+    #for val in params:
+    param_abs.append(abs(params[1]))
+    r_2.append(model.rsquared)
+multi_r_2 = []
+q_3 = int(sum(param_abs))
+q_4 = df.columns[r_2.index(max(r_2))+1]
+#print(q1,nyc_q2,q_3,q_4)
+for i in range(1, len(df.columns)):
+    X1 = df[df.columns[i]]
+    for j in range(i+1, len(df.columns)):
+        X2 = df[df.columns[j]]
+        X = pd.concat([X1,X2], axis = 1)
+        X = sm.add_constant(X)
+        model = sm.OLS(Y, X).fit()
+        multi_r_2.append([model.rsquared, df.columns[i], df.columns[j]])
+multi_r_2_val = [val[0] for val in multi_r_2]
+max_vals = multi_r_2[multi_r_2_val.index(max(multi_r_2_val))]
+q_5_t_1 = max_vals[1]
+q_5_t_2 = max_vals[2]
+answers = [q1,nyc_q2,q_3,q_4,q_5_t_1,q_5_t_2]
+ans = ",".join([str(val) for val in answers])
+#print(ans)
+#print(max(multi_r_2_val))
+#print(max(r_2))
+#idxs = df.loc[df['NYC']>40].index.tolist()
+#print(df.iloc[df['NYC']>40])
+resid_list = list(model.resid)
+y_list = list(Y)
+fitted_list = list(model.fittedvalues)
+residual_test = [y_list[i] - fitted_list[i] for i in range(len(resid_list))]
+diff = [resid_list[i] - residual_test[i] for i in range(len(resid_list))]
+#print(diff)
+#plt.scatter(model.fittedvalues, model.resid)
+#plt.show()
+
+#print(list(model.params))
+
+def sumTemps(row):
+    row['NYC'] = row['LA'] + row['BOS']
+
+df.apply(sumTemps, axis = 1)
+print(df)
+
+
+    
+
+
+   
